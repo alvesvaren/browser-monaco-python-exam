@@ -1,5 +1,9 @@
 import pyodidePromise, { DoneMessage, PrintMessage, ToMessage } from "../promise";
 
+if (!crossOriginIsolated) {
+  console.error("Cross origin isolation broken! (worker)")
+}
+
 console.log("Spawned a worker");
 self.addEventListener("message", async (e: MessageEvent<ToMessage>) => {
   const pyodide = await pyodidePromise;

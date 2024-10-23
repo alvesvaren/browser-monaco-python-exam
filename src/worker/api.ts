@@ -5,6 +5,10 @@ let buffer = new Uint8Array(new SharedArrayBuffer(1));
 let id = 0;
 const pyodideWorker = new PyodideWorker();
 
+if (!crossOriginIsolated) {
+  console.error("Cross origin isolation broken! (window)")
+}
+
 function postTypedMessage<T extends ToAction>(action: T, data: Omit<ToMessage & { action: T }, "action" | "id">) {
   id = (id + 1) % Number.MAX_SAFE_INTEGER;
   const myId = id;
