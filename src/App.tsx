@@ -1,8 +1,8 @@
 import { Editor } from "@monaco-editor/react";
 import clsx from "clsx";
-import { HTMLAttributes, ReactNode, use, useRef, useState } from "react";
+import { HTMLAttributes, ReactNode, use, useEffect, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
-import pyodidePromise from "./promise";
+import { asyncRun, listenToMessagesOfActionType, stopCode } from "./worker/api";
 
 const getInitialCode = () =>
   localStorage.getItem("editorContent") ??
@@ -14,8 +14,9 @@ const Button = (props: HTMLAttributes<HTMLButtonElement>) => <button className={
 
 function App() {
   const [code, setCode] = useState(getInitialCode());
+  const [running, setRunning] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [outputContent, setOutputContent] = useState<string[]>([]);
-  const pyodide = use(pyodidePromise);
   const matplotLibTargetRef = useRef<HTMLDivElement>(null);
 
   const handleEditorChange = (value: string = "") => {
@@ -23,27 +24,36 @@ function App() {
     setCode(value);
   };
 
+  useEffect(() => {
+    return listenToMessagesOfActionType("stdout", ({ content }) => {
+      setOutputContent(old => [...old, content]);
+    });
+  }, []);
+
+  useEffect(() => {
+    return listenToMessagesOfActionType("loaded", () => setLoading(false));
+  }, []);
+
   const runPythonScript = async (code: string) => {
+    setRunning(true);
     setOutputContent([]);
     if (matplotLibTargetRef.current) {
       (document as any).pyodideMplTarget = matplotLibTargetRef.current;
       matplotLibTargetRef.current.innerHTML = "";
     }
-    pyodide.setStdout({
-      batched(output) {
-        setOutputContent(old => [...old, output]);
-      },
-    });
-    pyodide.setStdin({ stdin: () => prompt() });
-    try {
-      const output = await pyodide.runPythonAsync(code);
 
-      console.info(`Ran with output: ${JSON.stringify(output)}`);
+    // pyodide.setStdin({ stdin: () => prompt() });
+    try {
+      const output = await asyncRun(code);
+
+      console.info(`Ran with output: ${JSON.stringify(output?.returns)}`);
     } catch (e: unknown) {
       if (e instanceof Error) {
         setOutputContent(old => [...old, e.toString()]);
       }
     }
+
+    setRunning(false);
   };
 
   return (
@@ -51,7 +61,7 @@ function App() {
       <div className='flex items-stretch flex-1 max-h-full'>
         <div className='resize-x overflow-auto w-full max-w-[80%] overflow-y-hidden'>
           <div className='flex gap-2'>
-            <Button onClick={() => runPythonScript(code)}>Run code</Button>
+            <Button onClick={() => (running ? stopCode() : runPythonScript(code))}>{running ? "Running..." : "Run code"}</Button>
             <Button
               onClick={() => {
                 if (confirm("Are you sure you want to reset the editor?")) {
@@ -62,6 +72,7 @@ function App() {
             >
               Reset editor
             </Button>
+            {loading && <div>Loading python</div>}
           </div>
           <Editor options={{ automaticLayout: true }} defaultLanguage='python' height='100%' theme='vs-dark' value={code} onChange={handleEditorChange} />
         </div>
