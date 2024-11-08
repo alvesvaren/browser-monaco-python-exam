@@ -37,6 +37,7 @@ self.addEventListener("message", async (e: MessageEvent<ToMessage>) => {
       break;
   }
 });
-
-await pyodidePromise;
-self.postMessage({ action: "loaded", id: "loaded" });
+(async () => {
+  await pyodidePromise;
+  self.postMessage({ action: "loaded", id: "loaded" });
+})()
