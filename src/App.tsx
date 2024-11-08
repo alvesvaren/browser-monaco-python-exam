@@ -1,6 +1,6 @@
 import { Editor } from "@monaco-editor/react";
 import clsx from "clsx";
-import { HTMLAttributes, ReactNode, use, useEffect, useRef, useState } from "react";
+import { HTMLAttributes, ReactNode, useEffect, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { asyncRun, listenToMessagesOfActionType, stopCode } from "./worker/api";
 
