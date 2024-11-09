@@ -1,7 +1,7 @@
 import pyodidePromise, { DoneMessage, PrintMessage, ToMessage } from "../promise";
 
 if (!crossOriginIsolated) {
-  console.error("Cross origin isolation broken! (worker)")
+  console.error("Cross origin isolation broken! (worker)");
 }
 
 console.log("Spawned a worker");
@@ -40,4 +40,4 @@ self.addEventListener("message", async (e: MessageEvent<ToMessage>) => {
 (async () => {
   await pyodidePromise;
   self.postMessage({ action: "loaded", id: "loaded" });
-})()
+})();
