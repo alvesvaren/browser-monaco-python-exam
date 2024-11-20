@@ -17,7 +17,6 @@ function App() {
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [outputContent, setOutputContent] = useState<string[]>([]);
-  const matplotLibTargetRef = useRef<HTMLDivElement>(null);
 
   const handleEditorChange = (value: string = "") => {
     localStorage.setItem("editorContent", value);
@@ -37,14 +36,14 @@ function App() {
   const runPythonScript = async (code: string) => {
     setRunning(true);
     setOutputContent([]);
-    if (matplotLibTargetRef.current) {
-      (document as any).pyodideMplTarget = matplotLibTargetRef.current;
-      matplotLibTargetRef.current.innerHTML = "";
-    }
 
     // pyodide.setStdin({ stdin: () => prompt() });
     try {
       const output = await asyncRun(code);
+
+      if (output?.error) {
+        throw new Error(output.error);
+      }
 
       console.info(`Ran with output: ${JSON.stringify(output?.returns)}`);
     } catch (e: unknown) {
@@ -76,13 +75,12 @@ function App() {
           </div>
           <Editor options={{ automaticLayout: true }} defaultLanguage='python' height='100%' theme='vs-dark' value={code} onChange={handleEditorChange} />
         </div>
-        <div className='flex-1 overflow-y-scroll max-h-full'>
+        <div className='flex-1 overflow-y-auto max-h-full'>
           {outputContent.map((e, i) => (
             <p className='whitespace-pre font-mono' key={i}>
               {(e.split("\n") as ReactNode[]).flatMap(x => [<br />, x]).slice(1)}
             </p>
           ))}
-          <div ref={matplotLibTargetRef} id='matplot-target' />
         </div>
       </div>
     </div>

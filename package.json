@@ -26,7 +26,7 @@
     "clsx": "^2.1.1",
     "monaco-editor": "^0.52.0",
     "polyscript": "^0.16.2",
-    "pyodide": "^0.26.2",
+    "pyodide": "^0.26.4",
     "react": "19.0.0-rc-09111202-20241011",
     "react-dom": "19.0.0-rc-09111202-20241011",
     "tailwind-merge": "^2.5.3"

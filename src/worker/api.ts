@@ -3,10 +3,10 @@ import PyodideWorker from "./worker?worker";
 
 let buffer = new Uint8Array(new SharedArrayBuffer(1));
 let id = 0;
-const pyodideWorker = new PyodideWorker();
+let pyodideWorker = new PyodideWorker();
 
 if (!crossOriginIsolated) {
-  console.error("Cross origin isolation broken! (window)")
+  console.error("Cross origin isolation broken! (window)");
 }
 
 function postTypedMessage<T extends ToAction>(action: T, data: Omit<ToMessage & { action: T }, "action" | "id">) {
@@ -26,6 +26,8 @@ function postTypedMessage<T extends ToAction>(action: T, data: Omit<ToMessage & 
   }
 }
 
+postTypedMessage("setBuffer", { buffer });
+
 export function listenToMessagesOfActionType<T extends FromAction, MSG = FromMessage & { action: T }>(action: T, callback: (data: MSG) => void) {
   const _callback = (ev: MessageEvent<FromMessage>) => {
     if (ev.data.action === action) {
@@ -36,15 +38,17 @@ export function listenToMessagesOfActionType<T extends FromAction, MSG = FromMes
   return () => pyodideWorker.removeEventListener("message", _callback);
 }
 
-
 export async function asyncRun(code: string, context = {}) {
   buffer[0] = 0;
-  postTypedMessage("setBuffer", { buffer });
   const resultPromise = postTypedMessage("start", { code, context });
   return await resultPromise;
 }
 
 export async function stopCode() {
-  console.log("Stopping")
+  console.log("Stopping");
+  // pyodideWorker.terminate();
+  // pyodideWorker = new PyodideWorker();
   buffer[0] = 2;
+
+  console.log(buffer);
 }

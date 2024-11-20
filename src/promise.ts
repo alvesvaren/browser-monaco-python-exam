@@ -1,4 +1,5 @@
 import { loadPyodide } from "pyodide";
+import type { TypedArray } from "pyodide/ffi";
 
 export interface StartExecMessage {
   id: number;
@@ -9,7 +10,7 @@ export interface StartExecMessage {
 
 export interface SetBufferMessage {
   id: number;
-  buffer: Uint8Array;
+  buffer: TypedArray;
   action: "setBuffer";
 }
 
@@ -46,8 +47,8 @@ export const messageActionMap = {
 export type ActionMapResult<T extends ToAction> = FromMessage & { action: (typeof messageActionMap)[T] };
 
 const pyodidePromise = loadPyodide({
-  indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.2/full/",
-  packages: ["matplotlib", "requests"],
+  indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/",
+  packages: ["networkx"],
 });
 
 export default pyodidePromise;

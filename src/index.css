@@ -7,7 +7,3 @@
     @apply px-5 py-1.5 bg-teal-900 text-white hover:bg-teal-950 transition-colors;
   }
 }
-
-button.fa.matplotlib-toolbar-button {
-  @apply btn border-none text-base rounded-none mr-2;
-}

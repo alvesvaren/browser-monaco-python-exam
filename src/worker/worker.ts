@@ -15,15 +15,17 @@ self.addEventListener("message", async (e: MessageEvent<ToMessage>) => {
   switch (data.action) {
     case "start":
       try {
-        pyodide.setStdout({
-          batched(content) {
+        const options = {
+                    batched(content: string) {
             self.postMessage({
               action: "stdout",
               content,
               id: "stdout",
             } satisfies PrintMessage);
           },
-        });
+        }
+        pyodide.setStderr(options)
+        pyodide.setStdout(options);
         let returns = await pyodide.runPythonAsync(data.code);
         self.postMessage({ action: "done", returns, id } satisfies DoneMessage);
       } catch (error: unknown) {
@@ -33,6 +35,7 @@ self.addEventListener("message", async (e: MessageEvent<ToMessage>) => {
       }
       break;
     case "setBuffer":
+      console.log("Set buffer");
       pyodide.setInterruptBuffer(data.buffer);
       break;
   }
