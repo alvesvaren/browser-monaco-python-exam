@@ -2,6 +2,9 @@ import { Editor } from "@monaco-editor/react";
 import { ReactNode, useState } from "react";
 import Button from "./components/Button";
 import { useListenToMessage, usePostMessage, useWorker, WorkerContext } from "./worker/api";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { cx } from "class-variance-authority";
+import { twMerge } from "tailwind-merge";
 
 const getInitialCode = () =>
   localStorage.getItem("editorContent") ??
@@ -55,32 +58,48 @@ function App({ restartWorker }: { restartWorker: () => void }) {
   return (
     <div className='w-full h-full flex flex-col'>
       <div className='flex items-stretch flex-1 max-h-full'>
-        <div className='resize-x overflow-auto w-full max-w-[80%] overflow-y-hidden'>
-          <div className='flex gap-2'>
-            <Button onClick={() => (running ? stopCode() : runPythonScript(code))} intent={running ? "destructive" : "primary"}>
-              {running ? "Stop" : "Run code"}
-            </Button>
-            <Button
-              onClick={() => {
-                if (confirm("Are you sure you want to reset the editor?")) {
-                  localStorage.removeItem("editorContent");
-                  setCode(getInitialCode());
-                }
-              }}
-            >
-              Reset editor
-            </Button>
-            {loading && <div>Loading python</div>}
-          </div>
-          <Editor options={{ automaticLayout: true }} defaultLanguage='python' height='100%' theme='vs-dark' value={code} onChange={handleEditorChange} />
-        </div>
-        <div className='flex-1 overflow-y-auto max-h-full'>
-          {outputContent.map((e, i) => (
-            <p className='whitespace-pre font-mono' key={i}>
-              {(e.split("\n") as ReactNode[]).flatMap(x => [<br />, x]).slice(1)}
-            </p>
-          ))}
-        </div>
+        <PanelGroup autoSaveId={"main"} direction='horizontal'>
+          <Panel minSize={30} defaultSize={70}>
+            <div className='overflow-auto w-full h-full overflow-y-hidden'>
+              <div className='flex gap-2'>
+                <Button onClick={() => (running ? stopCode() : runPythonScript(code))} intent={running ? "destructive" : "primary"}>
+                  {running ? "Stop" : "Run code"}
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (confirm("Are you sure you want to reset the editor?")) {
+                      localStorage.removeItem("editorContent");
+                      setCode(getInitialCode());
+                    }
+                  }}
+                >
+                  Reset editor
+                </Button>
+              </div>
+              <Editor options={{ automaticLayout: true }} defaultLanguage='python' height='100%' theme='vs-dark' value={code} onChange={handleEditorChange} />
+            </div>
+          </Panel>
+          <PanelResizeHandle className='border-r border-spacing-2 border-neutral-700' />
+          <Panel minSize={20}>
+            <div className='whitespace-pre font-mono flex-1 max-h-full flex flex-col'>
+              <div className='flex justify-between'>
+                <div
+                  className={twMerge(
+                    cx("transition-colors duration-500 animate-pulse pl-2 text-transparent select-none", loading && running && "text-white")
+                  )}
+                >
+                  Loading python...
+                </div>
+                <Button onClick={() => setOutputContent([])}>Clear</Button>
+              </div>
+              <div className='overflow-y-scroll max-h-full px-2 flex-1'>
+                {outputContent.map((e, i) => (
+                  <p key={i}>{(e.split("\n") as ReactNode[]).flatMap(x => [<br />, x]).slice(1)}</p>
+                ))}
+              </div>
+            </div>
+          </Panel>
+        </PanelGroup>
       </div>
     </div>
   );

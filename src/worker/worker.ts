@@ -1,6 +1,6 @@
 import pyodidePromise, { DoneMessage, PrintMessage, ToMessage } from "../promise";
 
-console.log("Spawned a worker");
+console.log("Worker: Spawned");
 self.addEventListener("message", async (e: MessageEvent<ToMessage>) => {
   const pyodide = await pyodidePromise;
 
@@ -34,5 +34,6 @@ self.addEventListener("message", async (e: MessageEvent<ToMessage>) => {
 });
 (async () => {
   await pyodidePromise;
+  console.log("Worker: Loaded")
   self.postMessage({ action: "loaded", id: "loaded" });
 })();
