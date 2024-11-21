@@ -1,8 +1,8 @@
 import { Editor } from "@monaco-editor/react";
-import clsx from "clsx";
-import { HTMLAttributes, ReactNode, useEffect, useRef, useState } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { ReactNode, useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { asyncRun, listenToMessagesOfActionType, stopCode } from "./worker/api";
+import { useListenToMessage, usePostMessage, useWorker, WorkerContext } from "./worker/api";
 
 const getInitialCode = () =>
   localStorage.getItem("editorContent") ??
@@ -10,28 +10,36 @@ const getInitialCode = () =>
 print("Hello world")
 `;
 
-const Button = (props: HTMLAttributes<HTMLButtonElement>) => <button className={twMerge(clsx("btn", props.className))} {...props} />;
+const variants = cva("px-5 py-1.5 bg-teal-900 text-white hover:bg-teal-950 transition-colors", {
+  variants: {
+    intent: {
+      primary: "",
+      destructive: "bg-red-800 hover:bg-red-900",
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+  },
+});
 
-function App() {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof variants> {}
+
+const Button = ({ className, intent, ...props }: ButtonProps) => <button className={twMerge(variants({ className, intent }))} {...props} />;
+
+function App({ restartWorker }: { restartWorker: () => void }) {
   const [code, setCode] = useState(getInitialCode());
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [outputContent, setOutputContent] = useState<string[]>([]);
+  const asyncRun = usePostMessage("start");
 
   const handleEditorChange = (value: string = "") => {
     localStorage.setItem("editorContent", value);
     setCode(value);
   };
 
-  useEffect(() => {
-    return listenToMessagesOfActionType("stdout", ({ content }) => {
-      setOutputContent(old => [...old, content]);
-    });
-  }, []);
-
-  useEffect(() => {
-    return listenToMessagesOfActionType("loaded", () => setLoading(false));
-  }, []);
+  useListenToMessage("stdout", ({ content }) => setOutputContent(old => [...old, content]));
+  useListenToMessage("loaded", () => setLoading(false));
 
   const runPythonScript = async (code: string) => {
     setRunning(true);
@@ -39,13 +47,13 @@ function App() {
 
     // pyodide.setStdin({ stdin: () => prompt() });
     try {
-      const output = await asyncRun(code);
+      const output = await asyncRun({ code, context: {} });
 
-      if (output?.error) {
+      if (output.error) {
         throw new Error(output.error);
       }
 
-      console.info(`Ran with output: ${JSON.stringify(output?.returns)}`);
+      console.info(`Ran with output: ${JSON.stringify(output.returns)}`);
     } catch (e: unknown) {
       if (e instanceof Error) {
         setOutputContent(old => [...old, e.toString()]);
@@ -55,12 +63,20 @@ function App() {
     setRunning(false);
   };
 
+  function stopCode() {
+    setRunning(false);
+    setLoading(true);
+    restartWorker();
+  }
+
   return (
     <div className='w-full h-full flex flex-col'>
       <div className='flex items-stretch flex-1 max-h-full'>
         <div className='resize-x overflow-auto w-full max-w-[80%] overflow-y-hidden'>
           <div className='flex gap-2'>
-            <Button onClick={() => (running ? stopCode() : runPythonScript(code))}>{running ? "Running..." : "Run code"}</Button>
+            <Button onClick={() => (running ? stopCode() : runPythonScript(code))} intent={running ? "destructive" : "primary"}>
+              {running ? "Stop" : "Run code"}
+            </Button>
             <Button
               onClick={() => {
                 if (confirm("Are you sure you want to reset the editor?")) {
@@ -87,4 +103,14 @@ function App() {
   );
 }
 
-export default App;
+function AppWrapper() {
+  const { worker, restartWorker } = useWorker();
+
+  return (
+    <WorkerContext value={worker}>
+      <App restartWorker={restartWorker} />
+    </WorkerContext>
+  );
+}
+
+export default AppWrapper;

@@ -1,5 +1,4 @@
 import { loadPyodide } from "pyodide";
-import type { TypedArray } from "pyodide/ffi";
 
 export interface StartExecMessage {
   id: number;
@@ -8,13 +7,7 @@ export interface StartExecMessage {
   code: string;
 }
 
-export interface SetBufferMessage {
-  id: number;
-  buffer: TypedArray;
-  action: "setBuffer";
-}
-
-export type ToMessage = StartExecMessage | SetBufferMessage;
+export type ToMessage = StartExecMessage;
 
 export interface PrintMessage {
   id: "stdout";
@@ -40,7 +33,6 @@ export type ToAction = ToMessage["action"];
 export type FromAction = FromMessage["action"];
 
 export const messageActionMap = {
-  setBuffer: null,
   start: "done",
 } satisfies Record<ToAction, FromAction | null>;
 
