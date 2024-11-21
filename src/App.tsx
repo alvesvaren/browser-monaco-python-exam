@@ -55,7 +55,7 @@ function App({ restartWorker }: { restartWorker: () => void }) {
     restartWorker();
   }
 
-  const outputLines = outputContent.map((e, i) => (
+  const outputLines = outputContent.map(e => (
     <p>
       {e
         .split("\n")
