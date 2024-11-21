@@ -1,5 +1,5 @@
 import { Editor } from "@monaco-editor/react";
-import { ReactNode, useState } from "react";
+import { Fragment, ReactNode, useState } from "react";
 import Button from "./components/Button";
 import { useListenToMessage, usePostMessage, useWorker, WorkerContext } from "./worker/api";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -55,10 +55,21 @@ function App({ restartWorker }: { restartWorker: () => void }) {
     restartWorker();
   }
 
+  const outputLines = outputContent.map((e, i) => (
+    <p>
+      {e
+        .split("\n")
+        .flatMap(x => [<br />, x])
+        .slice(1)}
+    </p>
+  ));
+
+  const truncatedLines = outputLines.slice(-1000);
+
   return (
     <div className='w-full h-full flex flex-col'>
       <div className='flex items-stretch flex-1 max-h-full'>
-        <PanelGroup autoSaveId={"main"} direction='horizontal'>
+        <PanelGroup autoSaveId='main' direction='horizontal'>
           <Panel minSize={30} defaultSize={70}>
             <div className='overflow-auto w-full h-full overflow-y-hidden'>
               <div className='flex gap-2'>
@@ -84,17 +95,18 @@ function App({ restartWorker }: { restartWorker: () => void }) {
             <div className='whitespace-pre font-mono flex-1 max-h-full flex flex-col'>
               <div className='flex justify-between'>
                 <div
-                  className={twMerge(
-                    cx("transition-colors duration-500 animate-pulse pl-2 text-transparent select-none", loading && running && "text-white")
-                  )}
+                  className={twMerge(cx("transition-colors duration-500 animate-pulse pl-2 text-transparent select-none", loading && running && "text-white"))}
                 >
                   Loading python...
                 </div>
                 <Button onClick={() => setOutputContent([])}>Clear</Button>
               </div>
               <div className='overflow-y-scroll max-h-full px-2 flex-1'>
-                {outputContent.map((e, i) => (
-                  <p key={i}>{(e.split("\n") as ReactNode[]).flatMap(x => [<br />, x]).slice(1)}</p>
+                {outputLines.length !== truncatedLines.length && (
+                  <i className='italic'>{`<...${outputLines.length - truncatedLines.length} lines truncated...>`}</i>
+                )}
+                {truncatedLines.map((e, i) => (
+                  <Fragment key={i}>{e}</Fragment>
                 ))}
               </div>
             </div>
