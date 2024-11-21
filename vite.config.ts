@@ -22,6 +22,9 @@ export default defineConfig({
       },
     },
   ],
+  build: {
+    sourcemap: true,
+  },
   server: {
     headers: {
       "Cross-Origin-Embedder-Policy": "require-corp",
