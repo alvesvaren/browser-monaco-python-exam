@@ -103,7 +103,7 @@ function App({ restartWorker }: { restartWorker: () => void }) {
           </Panel>
           <PanelResizeHandle className='border-r border-spacing-2 border-neutral-700' />
           <Panel minSize={20}>
-            <div className='whitespace-pre font-mono flex-1 max-h-full flex flex-col'>
+            <div className='whitespace-pre-wrap font-mono flex-1 max-h-full flex flex-col'>
               <div className='flex justify-between'>
                 <div
                   className={twMerge(cx("transition-colors duration-500 animate-pulse pl-2 text-transparent select-none", loading && running && "text-white"))}
