@@ -103,7 +103,14 @@ function App({ restartWorker }: { restartWorker: () => void }) {
                   Reset editor
                 </Button>
               </div>
-              <Editor options={{ automaticLayout: true }} defaultLanguage='python' height='100%' theme='vs-dark' value={code} onChange={handleEditorChange} />
+              <Editor
+                options={{ automaticLayout: true, minimap: { enabled: false } }}
+                defaultLanguage='python'
+                height='100%'
+                theme='vs-dark'
+                value={code}
+                onChange={handleEditorChange}
+              />
             </div>
           </Panel>
           <PanelResizeHandle className='border-r border-spacing-2 border-neutral-700' />
@@ -116,7 +123,7 @@ function App({ restartWorker }: { restartWorker: () => void }) {
                   Loading python...
                 </div>
                 <div className='flex gap-2'>
-                  <Button onClick={() => setSwap(!swap)}>{isVertical ? 'Side-by-side' : 'Stacked'}</Button>
+                  <Button onClick={() => setSwap(!swap)}>{isVertical ? "Side-by-side" : "Stacked"}</Button>
                   <Button
                     onClick={() => {
                       outputContent.current = [];
