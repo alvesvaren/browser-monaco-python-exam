@@ -1,6 +1,6 @@
 import { Editor } from "@monaco-editor/react";
 import { cx } from "class-variance-authority";
-import { Fragment, useState } from "react";
+import { useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { twMerge } from "tailwind-merge";
 import Button from "./components/Button";
@@ -16,7 +16,8 @@ function App({ restartWorker }: { restartWorker: () => void }) {
   const [code, setCode] = useState(getInitialCode());
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [outputContent, setOutputContent] = useState<string[]>([]);
+  const outputContent = useRef<string[]>([]);
+  const outputAreaRef = useRef<HTMLDivElement>(null);
   const asyncRun = usePostMessage("start");
 
   const handleEditorChange = (value: string = "") => {
@@ -24,12 +25,32 @@ function App({ restartWorker }: { restartWorker: () => void }) {
     setCode(value);
   };
 
-  useListenToMessage("stdout", ({ content }) => setOutputContent(old => [...old, content]));
+  function updateContent() {
+    const div = outputAreaRef.current;
+    if (!div) {
+      throw new Error("No area");
+    }
+    let output = "";
+    const outputLines = outputContent.current;
+    const truncatedLines = outputLines.slice(-200);
+    if (truncatedLines.length !== outputLines.length) {
+      output += `<...${outputLines.length - truncatedLines.length} lines truncated...>\n`;
+    }
+
+    output += truncatedLines.join("\n");
+    div.textContent = output;
+  }
+
+  useListenToMessage("stdout", ({ content }) => {
+    outputContent.current.push(content);
+    updateContent();
+  });
   useListenToMessage("loaded", () => setLoading(false));
 
   const runPythonScript = async (code: string) => {
     setRunning(true);
-    setOutputContent([]);
+    outputContent.current = [];
+    updateContent();
 
     // pyodide.setStdin({ stdin: () => prompt() });
     try {
@@ -42,7 +63,8 @@ function App({ restartWorker }: { restartWorker: () => void }) {
       console.info(`Ran with output: ${JSON.stringify(output.returns)}`);
     } catch (e: unknown) {
       if (e instanceof Error) {
-        setOutputContent(old => [...old, e.toString()]);
+        outputContent.current.push(e.toString());
+        updateContent();
       }
     }
 
@@ -54,17 +76,6 @@ function App({ restartWorker }: { restartWorker: () => void }) {
     setLoading(true);
     restartWorker();
   }
-
-  const outputLines = outputContent.map(e => (
-    <p>
-      {e
-        .split("\n")
-        .flatMap(x => [<br />, x])
-        .slice(1)}
-    </p>
-  ));
-
-  const truncatedLines = outputLines.slice(-1000);
 
   return (
     <div className='w-full h-full flex flex-col'>
@@ -99,16 +110,16 @@ function App({ restartWorker }: { restartWorker: () => void }) {
                 >
                   Loading python...
                 </div>
-                <Button onClick={() => setOutputContent([])}>Clear</Button>
+                <Button
+                  onClick={() => {
+                    outputContent.current = [];
+                    updateContent();
+                  }}
+                >
+                  Clear
+                </Button>
               </div>
-              <div className='overflow-y-scroll max-h-full px-2 flex-1'>
-                {outputLines.length !== truncatedLines.length && (
-                  <i className='italic'>{`<...${outputLines.length - truncatedLines.length} lines truncated...>`}</i>
-                )}
-                {truncatedLines.map((e, i) => (
-                  <Fragment key={i}>{e}</Fragment>
-                ))}
-              </div>
+              <div className='overflow-y-scroll max-h-full px-2 flex-1' ref={outputAreaRef} />
             </div>
           </Panel>
         </PanelGroup>
