@@ -13,6 +13,7 @@ export function usePostMessage<T extends ToAction>(action: T) {
     id = (id + 1) % Number.MAX_SAFE_INTEGER;
     const myId = id;
 
+    // TODO: Might get stuck here if the worker dies, maybe timeout instead
     const responsePromise = new Promise<ActionMapResult<T>>(success => {
       const callback = (ev: MessageEvent<ActionMapResult<T>>) => {
         if (ev.data.id === myId) {
@@ -32,11 +33,12 @@ export function usePostMessage<T extends ToAction>(action: T) {
 export function useListenToMessage<T extends FromAction, MSG = FromMessage & { action: T }>(action: T, callback: (data: MSG) => void) {
   const worker = use(WorkerContext);
   useEffect(() => {
-    const _callback = (ev: MessageEvent<FromMessage>) => {
+    function _callback(ev: MessageEvent<FromMessage>) {
+      // only run the callback if it's the correct message action
       if (ev.data.action === action) {
         callback(ev.data as MSG);
       }
-    };
+    }
 
     worker.addEventListener("message", _callback);
     return () => worker.removeEventListener("message", _callback);

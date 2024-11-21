@@ -1,6 +1,11 @@
-import pyodidePromise, { DoneMessage, PrintMessage, ToMessage } from "../promise";
+import pyodidePromise, { FromAction, FromMessage, ToMessage } from "../promise";
 
-console.log("Worker: Spawned");
+function sendTypedMessage<T extends FromAction>(action: T, data: Omit<FromMessage & { action: T }, "action">) {
+  self.postMessage({ action, ...data });
+}
+
+console.log("Worker: Created");
+
 self.addEventListener("message", async (e: MessageEvent<ToMessage>) => {
   const pyodide = await pyodidePromise;
 
@@ -13,20 +18,19 @@ self.addEventListener("message", async (e: MessageEvent<ToMessage>) => {
       try {
         const options = {
           batched(content: string) {
-            self.postMessage({
-              action: "stdout",
+            sendTypedMessage("stdout", {
               content,
               id: "stdout",
-            } satisfies PrintMessage);
+            });
           },
         };
         pyodide.setStderr(options);
         pyodide.setStdout(options);
         let returns = await pyodide.runPythonAsync(data.code);
-        self.postMessage({ action: "done", returns, id } satisfies DoneMessage);
+        sendTypedMessage("done", { returns, id });
       } catch (error: unknown) {
         if (error instanceof Error) {
-          self.postMessage({ action: "done", id, error: error.message, returns: undefined } satisfies DoneMessage);
+          sendTypedMessage("done", { id, error: error.message, returns: undefined });
         }
       }
       break;
@@ -34,6 +38,6 @@ self.addEventListener("message", async (e: MessageEvent<ToMessage>) => {
 });
 (async () => {
   await pyodidePromise;
-  console.log("Worker: Loaded")
-  self.postMessage({ action: "loaded", id: "loaded" });
+  console.log("Worker: Loaded");
+  sendTypedMessage("loaded", { id: "loaded" });
 })();

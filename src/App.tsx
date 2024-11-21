@@ -32,7 +32,7 @@ function App({ restartWorker }: { restartWorker: () => void }) {
     }
     let output = "";
     const outputLines = outputContent.current;
-    const truncatedLines = outputLines.slice(-200);
+    const truncatedLines = outputLines.slice(-1000);
     if (truncatedLines.length !== outputLines.length) {
       output += `<...${outputLines.length - truncatedLines.length} lines truncated...>\n`;
     }
