@@ -17,6 +17,7 @@
     "react": "19.0.0-rc-09111202-20241011",
     "react-dom": "19.0.0-rc-09111202-20241011",
     "react-resizable-panels": "^2.1.7",
+    "react-use": "^17.5.1",
     "tailwind-merge": "^2.5.3"
   },
   "devDependencies": {

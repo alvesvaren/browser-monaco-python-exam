@@ -5,6 +5,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { twMerge } from "tailwind-merge";
 import Button from "./components/Button";
 import { useListenToMessage, usePostMessage, useWorker, WorkerContext } from "./worker/api";
+import { useMedia } from "react-use";
 
 const getInitialCode = () =>
   localStorage.getItem("editorContent") ??
@@ -13,9 +14,11 @@ print("Hello world")
 `;
 
 function App({ restartWorker }: { restartWorker: () => void }) {
+  const isSmall = useMedia("(max-width: 1024px)");
   const [code, setCode] = useState(getInitialCode());
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [swap, setSwap] = useState(false);
   const outputContent = useRef<string[]>([]);
   const outputAreaRef = useRef<HTMLDivElement>(null);
   const asyncRun = usePostMessage("start");
@@ -77,11 +80,13 @@ function App({ restartWorker }: { restartWorker: () => void }) {
     restartWorker();
   }
 
+  const isVertical = swap !== isSmall;
+
   return (
     <div className='w-full h-full flex flex-col'>
-      <div className='flex items-stretch flex-1 max-h-full'>
-        <PanelGroup autoSaveId='main' direction='horizontal'>
-          <Panel minSize={30} defaultSize={70}>
+      <div className='flex-1 max-h-full'>
+        <PanelGroup autoSaveId='main' direction={isVertical ? "vertical" : "horizontal"}>
+          <Panel minSize={20} defaultSize={70}>
             <div className='overflow-auto w-full h-full overflow-y-hidden'>
               <div className='flex gap-2'>
                 <Button onClick={() => (running ? stopCode() : runPythonScript(code))} intent={running ? "destructive" : "primary"}>
@@ -110,14 +115,17 @@ function App({ restartWorker }: { restartWorker: () => void }) {
                 >
                   Loading python...
                 </div>
-                <Button
-                  onClick={() => {
-                    outputContent.current = [];
-                    updateContent();
-                  }}
-                >
-                  Clear
-                </Button>
+                <div className='flex gap-2'>
+                  <Button onClick={() => setSwap(!swap)}>{isVertical ? 'Side-by-side' : 'Stacked'}</Button>
+                  <Button
+                    onClick={() => {
+                      outputContent.current = [];
+                      updateContent();
+                    }}
+                  >
+                    Clear
+                  </Button>
+                </div>
               </div>
               <div className='overflow-y-scroll max-h-full px-2 flex-1' ref={outputAreaRef} />
             </div>
