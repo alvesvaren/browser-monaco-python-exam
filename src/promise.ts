@@ -38,9 +38,6 @@ export const messageActionMap = {
 
 export type ActionMapResult<T extends ToAction> = FromMessage & { action: (typeof messageActionMap)[T] };
 
-const pyodidePromise = loadPyodide({
-  indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/",
-  packages: ["networkx"],
-});
+const pyodidePromise = loadPyodide();
 
 export default pyodidePromise;
