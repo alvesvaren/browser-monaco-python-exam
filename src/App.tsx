@@ -1,10 +1,10 @@
 import { Editor } from "@monaco-editor/react";
-import { Fragment, ReactNode, useState } from "react";
+import { cx } from "class-variance-authority";
+import { Fragment, useState } from "react";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { twMerge } from "tailwind-merge";
 import Button from "./components/Button";
 import { useListenToMessage, usePostMessage, useWorker, WorkerContext } from "./worker/api";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { cx } from "class-variance-authority";
-import { twMerge } from "tailwind-merge";
 
 const getInitialCode = () =>
   localStorage.getItem("editorContent") ??
