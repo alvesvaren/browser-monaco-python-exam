@@ -1,7 +1,6 @@
 import { Editor } from "@monaco-editor/react";
-import { cva, type VariantProps } from "class-variance-authority";
 import { ReactNode, useState } from "react";
-import { twMerge } from "tailwind-merge";
+import Button from "./components/Button";
 import { useListenToMessage, usePostMessage, useWorker, WorkerContext } from "./worker/api";
 
 const getInitialCode = () =>
@@ -9,22 +8,6 @@ const getInitialCode = () =>
   `# In browser python editor
 print("Hello world")
 `;
-
-const variants = cva("px-5 py-1.5 bg-teal-900 text-white hover:bg-teal-950 transition-colors", {
-  variants: {
-    intent: {
-      primary: "",
-      destructive: "bg-red-800 hover:bg-red-900",
-    },
-  },
-  defaultVariants: {
-    intent: "primary",
-  },
-});
-
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof variants> {}
-
-const Button = ({ className, intent, ...props }: ButtonProps) => <button className={twMerge(variants({ className, intent }))} {...props} />;
 
 function App({ restartWorker }: { restartWorker: () => void }) {
   const [code, setCode] = useState(getInitialCode());
