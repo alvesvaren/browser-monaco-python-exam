@@ -104,7 +104,7 @@ function App({ restartWorker }: { restartWorker: () => void }) {
                 </Button>
               </div>
               <Editor
-                options={{ automaticLayout: true, minimap: { enabled: false } }}
+                options={{ automaticLayout: true, minimap: { enabled: false }, copyWithSyntaxHighlighting: false }}
                 defaultLanguage='python'
                 height='100%'
                 theme='vs-dark'
